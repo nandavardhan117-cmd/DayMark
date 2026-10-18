@@ -1,0 +1,83 @@
+rules_version = '2';
+
+// ---------------------------------------------------------------------------
+// DayMark — Cloud Firestore security rules
+//
+// HOW TO INSTALL (free Spark plan, no CLI required)
+//   1. Open Firebase Console -> Firestore Database -> Rules tab
+//   2. Replace the entire editor contents with this file
+//   3. Click "Publish"
+//
+// WHAT THIS DOES
+//   Every document lives under users/{uid}. The rules require that the caller
+//   is signed in AND that their uid matches the {userId} path segment. A user
+//   who guesses another uid is refused by Firestore itself, not by client code,
+//   so no one can read or write somebody else's records.
+//
+//   Anything not explicitly matched is denied by default.
+//
+// RULE STRUCTURE (why each verb is listed separately)
+//   Firestore ORs together every allow statement that matches a path: if ONE
+//   of them evaluates to true, the request is allowed. So a broad `allow write`
+//   placed next to a narrower `allow create` does not tighten anything — the
+//   broad rule wins and the narrow one never runs. Each verb below is therefore
+//   covered exactly once, with no overlapping statements.
+//
+// NOTE ON THE FREE TIER — the Spark plan includes generous free quotas for
+// Auth and Firestore. Nothing here enables billing.
+// ---------------------------------------------------------------------------
+
+service cloud.firestore {
+
+  // Helper: the caller must be signed in AND be the owner of this path.
+  // Declared inside the service block, which is where functions are valid.
+  function isOwner(userId) {
+    return request.auth != null && request.auth.uid == userId;
+  }
+
+  // A day document must be named YYYY-MM-DD, and its stored `date` field must
+  // equal that name, so a record can never claim to belong to a different day.
+  // Applied to BOTH create and update, because an update could rewrite the field.
+  function validDay(docId, data) {
+    return docId.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+      && data.date == docId;
+  }
+
+  match /databases/{database}/documents {
+
+    // One private tree per authenticated user:
+    //   users/{uid}                    -> settings, categories, challenges, tasks
+    //   users/{uid}/days/{YYYY-MM-DD}  -> one completion record per date
+    match /users/{userId} {
+
+      // NOTE: this pattern matches ONLY the account document itself. It does
+      // NOT cover the `days` subcollection — nested matches are evaluated by
+      // their own rules, so there is no overlap between these two levels.
+      // No field requirements are imposed here because the app writes this
+      // document with `merge: true`, which sends partial payloads.
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      match /days/{date} {
+        // Each verb is covered exactly once — no allow statements overlap.
+        allow read: if isOwner(userId);
+
+        // Deleting a day record needs no field validation: the document is
+        // being removed, so there is no data left to check.
+        allow delete: if isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && validDay(date, request.resource.data);
+
+        allow update: if isOwner(userId)
+          && validDay(date, request.resource.data);
+      }
+    }
+
+    // Any other path in the database is refused. (This is also the default,
+    // but it is stated explicitly so intent is visible.)
+    allow read, write: if false;
+  }
+}

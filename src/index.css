@@ -1,0 +1,250 @@
+@import 'tailwindcss';
+
+/* Allows the built-in `dark:` variant to key off a class on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+   Every token lives as a plain CSS variable under :root / .dark.
+   `@theme inline` makes Tailwind generate utilities (bg-surface, text-ink, …)
+   that read these variables at use-time, so adding `.dark` to <html> repaints
+   the whole app instantly.
+--------------------------------------------------------------------------- */
+:root {
+  --dm-bg: #f6f7f9;
+  --dm-surface: #ffffff;
+  --dm-surface-2: #f2f3f7;
+  --dm-line: #e6e8ee;
+  --dm-line-strong: #d4d7e1;
+  --dm-ink: #14161c;
+  --dm-ink-2: #565b6b;
+  --dm-ink-3: #8b90a1;
+  --dm-brand: #4f46e5;
+  --dm-brand-hover: #4338ca;
+  --dm-brand-soft: #eef2ff;
+  --dm-success: #059669;
+  --dm-success-soft: #ecfdf5;
+  --dm-warning: #d97706;
+  --dm-warning-soft: #fffbeb;
+  --dm-danger: #e11d48;
+  --dm-danger-soft: #fff1f2;
+  --dm-ring: rgb(79 70 229 / 0.35);
+  --dm-shadow: 0 1px 2px rgb(16 18 28 / 0.04), 0 8px 24px -12px rgb(16 18 28 / 0.12);
+}
+
+.dark {
+  --dm-bg: #0a0c11;
+  --dm-surface: #12151c;
+  --dm-surface-2: #191d26;
+  --dm-line: #232833;
+  --dm-line-strong: #303747;
+  --dm-ink: #e9ebf2;
+  --dm-ink-2: #a2a8b9;
+  --dm-ink-3: #6c7284;
+  --dm-brand: #7c83ff;
+  --dm-brand-hover: #9aa0ff;
+  --dm-brand-soft: #1b1e3d;
+  --dm-success: #34d399;
+  --dm-success-soft: #062a1f;
+  --dm-warning: #fbbf24;
+  --dm-warning-soft: #2c2105;
+  --dm-danger: #fb7185;
+  --dm-danger-soft: #320a16;
+  --dm-ring: rgb(124 131 255 / 0.4);
+  --dm-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -16px rgb(0 0 0 / 0.7);
+}
+
+@theme inline {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --color-bg: var(--dm-bg);
+  --color-surface: var(--dm-surface);
+  --color-surface-2: var(--dm-surface-2);
+  --color-line: var(--dm-line);
+  --color-line-strong: var(--dm-line-strong);
+  --color-ink: var(--dm-ink);
+  --color-ink-2: var(--dm-ink-2);
+  --color-ink-3: var(--dm-ink-3);
+  --color-brand: var(--dm-brand);
+  --color-brand-hover: var(--dm-brand-hover);
+  --color-brand-soft: var(--dm-brand-soft);
+  --color-success: var(--dm-success);
+  --color-success-soft: var(--dm-success-soft);
+  --color-warning: var(--dm-warning);
+  --color-warning-soft: var(--dm-warning-soft);
+  --color-danger: var(--dm-danger);
+  --color-danger-soft: var(--dm-danger-soft);
+
+  --radius-card: 1rem;
+
+  --shadow-card: var(--dm-shadow);
+
+  --animate-fade-up: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.2s ease-out both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Base layer
+--------------------------------------------------------------------------- */
+@layer base {
+  * {
+    border-color: var(--dm-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--dm-bg);
+    color: var(--dm-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--dm-brand);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--dm-brand);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Small utilities shared across the app
+--------------------------------------------------------------------------- */
+@layer utilities {
+  .card {
+    background-color: var(--dm-surface);
+    border: 1px solid var(--dm-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--dm-shadow);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--dm-line-strong) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--dm-line-strong);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Printing
+   Used mainly by the Monthly Tracker. We drop the app chrome, force the light
+   palette so dark-mode users still get a clean sheet, and keep the coloured
+   cells legible on paper.
+--------------------------------------------------------------------------- */
+@media print {
+  :root,
+  .dark {
+    --dm-bg: #ffffff;
+    --dm-surface: #ffffff;
+    --dm-surface-2: #f4f4f6;
+    --dm-line: #c9c9cf;
+    --dm-line-strong: #9b9ba4;
+    --dm-ink: #14161c;
+    --dm-ink-2: #3f4250;
+    --dm-ink-3: #6b7080;
+    --dm-brand: #4338ca;
+    --dm-brand-soft: #eef2ff;
+    --dm-success: #047857;
+    --dm-warning: #b45309;
+    --dm-danger: #be123c;
+    --dm-shadow: none;
+  }
+
+  /* Keep tinted cells and shaded bars visible on paper. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print,
+  aside,
+  nav[aria-label='Main navigation'],
+  nav[aria-label='Main'] {
+    display: none !important;
+  }
+
+  /* Remove the sidebar offset and tighten page margins. */
+  .lg\:pl-64 {
+    padding-left: 0 !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border-color: var(--dm-line) !important;
+  }
+
+  /* Sticky columns confuse print layout — make them behave like normal cells. */
+  .sticky {
+    position: static !important;
+  }
+
+  * {
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Keep each habit row together when it lands across a page break. */
+  tr {
+    break-inside: avoid;
+  }
+}
